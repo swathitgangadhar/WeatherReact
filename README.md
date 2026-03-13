@@ -13,6 +13,6 @@ Humidity bar, feels-like temp, and high/low range
 
 ## Setup & Run
 npm start
-npx http-server .
+
 
 
