@@ -214,10 +214,10 @@ export default function App() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const t = query.trim();
-    if (!t) return;
-    if (cities.includes(t.toLowerCase())) { setError("Already showing that city."); return; }
-    fetchWeather(t); setQuery("");
+    const queryTrim = query.trim();
+    if (!queryTrim) return;
+    if (cities.includes(queryTrim.toLowerCase())) { setError("Already showing that city."); return; }
+    fetchWeather(queryTrim); setQuery("");
   };
 
   const removeCity = (name) => {
