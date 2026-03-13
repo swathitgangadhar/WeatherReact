@@ -1,38 +1,366 @@
-.App {
-  text-align: center;
+/* ============================================
+   WEATHER APP — Global Styles
+   Import this into your project:
+   import './weatherStyles.css';
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+
+/* ── CSS Variables ─────────────────────────── */
+:root {
+  --radius-card: 28px;
+  --radius-pill: 999px;
+  --blur: blur(18px);
+  --transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-card: 0 24px 60px rgba(0,0,0,0.35);
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
 }
 
-.App-logo {
-  height: 40vmin;
+/* ── Base ──────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  min-height: 100vh;
+  transition: background 1.2s ease;
+}
+
+/* ── Full-page Weather Backgrounds ─────────── */
+
+/* Sunny Day */
+.wx-bg-sunny {
+  background: linear-gradient(160deg, #fbbf24 0%, #f59e0b 25%, #0ea5e9 60%, #0284c7 100%);
+}
+.wx-bg-sunny::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse 60% 50% at 75% 15%, rgba(255,220,80,0.55) 0%, transparent 70%),
+              radial-gradient(ellipse 40% 30% at 78% 12%, rgba(255,255,200,0.35) 0%, transparent 60%);
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* Night */
+.wx-bg-night {
+  background: linear-gradient(180deg, #0a0e27 0%, #0f1c3f 40%, #1a2a5e 100%);
+}
+.wx-bg-night::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse 30% 20% at 70% 12%, rgba(120,140,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
 }
 
-.App-header {
-  background-color: #282c34;
+/* Cloudy */
+.wx-bg-cloudy {
+  background: linear-gradient(160deg, #94a3b8 0%, #64748b 45%, #475569 100%);
+}
+
+/* Rainy */
+.wx-bg-rain {
+  background: linear-gradient(175deg, #1e3a5f 0%, #1e293b 50%, #0f172a 100%);
+}
+
+/* Stormy */
+.wx-bg-thunder {
+  background: linear-gradient(170deg, #1a0535 0%, #2d1b69 35%, #0f0a1e 100%);
+}
+
+/* Snowy */
+.wx-bg-snow {
+  background: linear-gradient(165deg, #dbeafe 0%, #bfdbfe 35%, #93c5fd 65%, #60a5fa 100%);
+}
+
+/* Foggy/Mist */
+.wx-bg-fog {
+  background: linear-gradient(160deg, #9ca3af 0%, #6b7280 50%, #4b5563 100%);
+}
+
+/* ── Animated Particles Layer ───────────────── */
+.wx-particles {
+  position: absolute; inset: 0;
+  overflow: hidden; pointer-events: none;
+  z-index: 1;
+}
+
+/* Rain drops */
+.wx-raindrop {
+  position: absolute;
+  top: -20px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, transparent, rgba(147,197,253,0.6));
+  border-radius: 2px;
+  animation: wx-rain linear infinite;
+}
+@keyframes wx-rain {
+  to { transform: translateY(110vh); opacity: 0; }
+}
+
+/* Snow flakes */
+.wx-snowflake {
+  position: absolute;
+  top: -20px;
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  user-select: none;
+  animation: wx-snow linear infinite;
+}
+@keyframes wx-snow {
+  0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.9; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(105vh) translateX(40px) rotate(360deg); opacity: 0; }
+}
+
+/* Sun rays */
+.wx-sunray {
+  position: absolute;
+  top: 0; right: 0;
+  width: 320px; height: 320px;
+  background: conic-gradient(
+    from 200deg,
+    transparent 0deg, rgba(255,230,80,0.08) 8deg,
+    transparent 16deg, rgba(255,230,80,0.06) 24deg,
+    transparent 32deg, rgba(255,230,80,0.09) 40deg,
+    transparent 48deg, rgba(255,230,80,0.05) 56deg,
+    transparent 64deg
+  );
+  animation: wx-spinray 18s linear infinite;
+  border-radius: 50%;
+  transform-origin: center;
+}
+@keyframes wx-spinray {
+  to { transform: rotate(360deg); }
+}
+.wx-sunglow {
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(253,224,71,0.4) 0%, rgba(251,191,36,0.15) 50%, transparent 75%);
+  border-radius: 50%;
+  animation: wx-pulse 3s ease-in-out infinite;
+}
+@keyframes wx-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50%       { transform: scale(1.1); opacity: 1; }
+}
+
+/* Stars */
+.wx-star {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: wx-twinkle ease-in-out infinite;
+}
+@keyframes wx-twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.7); }
+  50%       { opacity: 1;    transform: scale(1.4); }
+}
+
+/* Lightning flash */
+.wx-lightning {
+  position: fixed; inset: 0;
+  background: rgba(200,180,255,0.0);
+  pointer-events: none; z-index: 2;
+  animation: wx-flash 7s ease infinite;
+}
+@keyframes wx-flash {
+  0%, 88%, 90%, 94%, 96%, 100% { background: rgba(200,180,255,0); }
+  89%                            { background: rgba(200,180,255,0.22); }
+  95%                            { background: rgba(200,180,255,0.12); }
+}
+
+/* ── Glass Card ─────────────────────────────── */
+.wx-card {
+  position: relative;
+  z-index: 10;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+  overflow: hidden;
+}
+.wx-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 32px 72px rgba(0,0,0,0.4);
+}
+
+/* Dark glass variant (rain/thunder/night) */
+.wx-card--dark {
+  background: rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.10);
+}
+
+/* Light glass variant (snow/sunny) */
+.wx-card--light {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.50);
+  color: #1e293b;
+}
+.wx-card--light .wx-label { color: rgba(15,23,42,0.5); }
+.wx-card--light .wx-muted { color: rgba(15,23,42,0.4); }
+
+/* ── Stat mini-card ─────────────────────────── */
+.wx-stat {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 18px;
+  padding: 14px 16px;
+  transition: var(--transition);
+}
+.wx-stat:hover { background: rgba(255,255,255,0.18); }
+
+/* ── Typography ─────────────────────────────── */
+.wx-temp {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(80px, 18vw, 120px);
+  line-height: 1;
+  color: white;
+  text-shadow: 0 4px 30px rgba(0,0,0,0.2);
+}
+.wx-city-name {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 400;
+  color: white;
+}
+.wx-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+.wx-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+}
+.wx-muted {
+  font-size: 11px;
+  color: rgba(255,255,255,0.40);
+}
+
+/* ── Progress bar ───────────────────────────── */
+.wx-bar-track {
+  height: 5px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.wx-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── UV color helpers ───────────────────────── */
+.uv-low    { color: #4ade80; }
+.uv-mod    { color: #facc15; }
+.uv-high   { color: #fb923c; }
+.uv-vhigh  { color: #f87171; }
+.uv-ext    { color: #c084fc; }
+.bar-low   { background: #4ade80; }
+.bar-mod   { background: #facc15; }
+.bar-high  { background: #fb923c; }
+.bar-vhigh { background: #f87171; }
+.bar-ext   { background: #c084fc; }
+
+/* ── Search bar ─────────────────────────────── */
+.wx-input {
+  font-family: var(--font-body);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: var(--radius-pill);
+  color: white;
+  padding: 14px 22px;
+  font-size: 15px;
+  outline: none;
+  transition: var(--transition);
+  width: 100%;
+}
+.wx-input::placeholder { color: rgba(255,255,255,0.35); }
+.wx-input:focus {
+  border-color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.18);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+}
+
+.wx-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  background: white;
+  color: #0f172a;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.wx-btn:hover  { background: rgba(255,255,255,0.9); transform: translateY(-1px); }
+.wx-btn:active { transform: scale(0.97); }
+.wx-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── Forecast pill ──────────────────────────── */
+.wx-fc-cell {
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 10px 6px;
+  text-align: center;
+  transition: var(--transition);
+}
+.wx-fc-cell:hover { background: rgba(255,255,255,0.18); }
+
+/* ── Close button ───────────────────────────── */
+.wx-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.20);
+  color: white;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.wx-close:hover { background: rgba(239,68,68,0.5); border-color: rgba(239,68,68,0.4); }
+
+/* ── Page wrapper (centered) ────────────────── */
+.wx-page {
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: flex-start;
+  padding: 48px 16px 64px;
+  transition: background 1.2s ease;
+}
+.wx-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 580px;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 480px) {
+  .wx-temp { font-size: 96px; }
+  .wx-page { padding: 32px 12px 48px; }
 }
