@@ -1,6 +1,6 @@
 
 ## Setup & Run
-npx tsc
+npm start
 npx http-server .
 
 
