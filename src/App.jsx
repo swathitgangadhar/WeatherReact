@@ -2,182 +2,185 @@ import { useState, useEffect } from "react";
 
 const API_KEY = "fcf4eeffbeb6d7effdb9fdbd5a8388f8";
 
-const getWeatherTheme = (condition, isDay = true) => {
-  const c = condition?.toLowerCase() || "";
-  if (c.includes("thunder") || c.includes("storm"))
-    return { bg: "from-gray-900 via-purple-950 to-gray-900", card: "bg-purple-950/40", accent: "text-purple-300", border: "border-purple-500/30", icon: "⛈️", particles: "thunder" };
-  if (c.includes("snow") || c.includes("blizzard"))
-    return { bg: "from-slate-600 via-blue-100 to-slate-300", card: "bg-white/30", accent: "text-blue-900", border: "border-white/50", icon: "❄️", particles: "snow" };
-  if (c.includes("rain") || c.includes("drizzle") || c.includes("mist"))
-    return { bg: "from-slate-800 via-slate-600 to-blue-900", card: "bg-slate-700/40", accent: "text-blue-200", border: "border-blue-400/20", icon: "🌧️", particles: "rain" };
-  if (c.includes("cloud") || c.includes("overcast") || c.includes("fog"))
-    return { bg: "from-gray-500 via-gray-400 to-slate-500", card: "bg-white/20", accent: "text-gray-100", border: "border-white/30", icon: "☁️", particles: "none" };
-  if (isDay)
-    return { bg: "from-sky-400 via-blue-500 to-indigo-600", card: "bg-white/20", accent: "text-yellow-200", border: "border-white/30", icon: "☀️", particles: "sun" };
-  return { bg: "from-indigo-950 via-blue-950 to-slate-900", card: "bg-indigo-900/30", accent: "text-indigo-200", border: "border-indigo-400/20", icon: "🌙", particles: "stars" };
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--blur:blur(18px);--trans:all .5s cubic-bezier(.22,1,.36,1);--shadow:0 24px 60px rgba(0,0,0,.35);--fn-d:'DM Serif Display',Georgia,serif;--fn-b:'DM Sans',system-ui,sans-serif;}
+body{font-family:var(--fn-b)}
+.wxbg-sunny{background:linear-gradient(160deg,#fbbf24 0%,#f59e0b 22%,#0ea5e9 60%,#0284c7 100%)}
+.wxbg-night{background:linear-gradient(180deg,#0a0e27 0%,#0f1c3f 45%,#1a2a5e 100%)}
+.wxbg-cloudy{background:linear-gradient(155deg,#94a3b8 0%,#64748b 50%,#475569 100%)}
+.wxbg-rain{background:linear-gradient(175deg,#1e3a5f 0%,#1e293b 55%,#0f172a 100%)}
+.wxbg-thunder{background:linear-gradient(170deg,#1a0535 0%,#2d1b69 38%,#0f0a1e 100%)}
+.wxbg-snow{background:linear-gradient(165deg,#dbeafe 0%,#bfdbfe 38%,#93c5fd 65%,#60a5fa 100%)}
+.wxbg-fog{background:linear-gradient(160deg,#9ca3af 0%,#6b7280 55%,#4b5563 100%)}
+.particles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.raindrop{position:absolute;top:-20px;width:1.5px;background:linear-gradient(to bottom,transparent,rgba(147,197,253,.65));border-radius:2px;animation:rain linear infinite}
+@keyframes rain{to{transform:translateY(110vh);opacity:0}}
+.snowflake{position:absolute;top:-20px;color:rgba(255,255,255,.8);animation:snowf linear infinite}
+@keyframes snowf{0%{transform:translateY(-20px) translateX(0) rotate(0);opacity:0}10%{opacity:.9}90%{opacity:.8}100%{transform:translateY(108vh) translateX(35px) rotate(360deg);opacity:0}}
+.sunglow{position:fixed;top:-80px;right:-80px;width:320px;height:320px;background:radial-gradient(circle,rgba(253,224,71,.45) 0%,rgba(251,191,36,.18) 48%,transparent 72%);border-radius:50%;animation:glow 3.5s ease-in-out infinite;pointer-events:none;z-index:0}
+.sunray{position:fixed;top:-60px;right:-60px;width:350px;height:350px;background:conic-gradient(from 200deg,transparent 0deg,rgba(255,235,80,.07) 7deg,transparent 14deg,rgba(255,235,80,.06) 22deg,transparent 29deg,rgba(255,235,80,.09) 37deg,transparent 44deg);border-radius:50%;animation:spin 20s linear infinite;pointer-events:none;z-index:0}
+@keyframes glow{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.12);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.star{position:absolute;background:white;border-radius:50%;animation:twinkle ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:1;transform:scale(1.5)}}
+.lightning{position:fixed;inset:0;pointer-events:none;z-index:1;animation:flash 8s ease infinite}
+@keyframes flash{0%,87%,91%,95%,100%{background:rgba(200,180,255,0)}88%{background:rgba(200,180,255,.22)}90%{background:rgba(200,180,255,.05)}94%{background:rgba(200,180,255,.12)}}
+.wx-page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:48px 16px 64px;transition:background 1.2s ease}
+.wx-content{position:relative;z-index:10;width:100%;max-width:560px}
+.wx-input{font-family:var(--fn-b);background:rgba(255,255,255,.13);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,.22);border-radius:999px;color:white;padding:14px 22px;font-size:15px;outline:none;transition:var(--trans);width:100%}
+.wx-input::placeholder{color:rgba(255,255,255,.35)}
+.wx-input:focus{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.18);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+.wx-btn{font-family:var(--fn-b);font-weight:600;font-size:14px;letter-spacing:.04em;background:white;color:#0f172a;border:none;border-radius:999px;padding:14px 28px;cursor:pointer;transition:var(--trans);white-space:nowrap}
+.wx-btn:hover{background:rgba(255,255,255,.9);transform:translateY(-1px)}
+.wx-btn:active{transform:scale(.97)}
+.wx-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.wx-card{position:relative;z-index:10;background:rgba(255,255,255,.13);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,.22);border-radius:28px;box-shadow:var(--shadow);transition:var(--trans);overflow:hidden;margin-bottom:24px}
+.wx-card:hover{transform:translateY(-2px);box-shadow:0 32px 72px rgba(0,0,0,.4)}
+.wx-card.dark{background:rgba(0,0,0,.22);border-color:rgba(255,255,255,.10)}
+.wx-card.light{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.55);color:#1e293b}
+.wx-card.light .lbl,.wx-card.light .muted{color:rgba(15,23,42,.45)}
+.wx-card.light .val,.wx-card.light .cname,.wx-card.light .tempn{color:#0f172a}
+.wx-stat{background:rgba(255,255,255,.10);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:14px 16px;transition:var(--trans)}
+.wx-stat:hover{background:rgba(255,255,255,.18)}
+.tempn{font-family:var(--fn-d);font-style:italic;font-size:clamp(72px,16vw,108px);line-height:1;color:white;text-shadow:0 4px 30px rgba(0,0,0,.18)}
+.cname{font-family:var(--fn-d);font-size:clamp(20px,4.5vw,28px);font-weight:400;color:white}
+.lbl{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.42)}
+.val{font-size:22px;font-weight:600;color:white}
+.muted{font-size:11px;color:rgba(255,255,255,.38)}
+.bar-track{height:5px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;margin-top:8px}
+.bar-fill{height:100%;border-radius:999px;transition:width 1s cubic-bezier(.22,1,.36,1)}
+.uv-low{color:#4ade80}.uv-mod{color:#facc15}.uv-high{color:#fb923c}.uv-vh{color:#f87171}.uv-ext{color:#c084fc}
+.bl{background:#4ade80}.bm{background:#facc15}.bh{background:#fb923c}.bvh{background:#f87171}.be{background:#c084fc}
+.fc-cell{background:rgba(255,255,255,.10);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:10px 6px;text-align:center;transition:var(--trans)}
+.fc-cell:hover{background:rgba(255,255,255,.18)}
+.fc-cell.light{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.1);color:#0f172a}
+.wx-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.20);color:white;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--trans)}
+.wx-close:hover{background:rgba(239,68,68,.5);border-color:rgba(239,68,68,.4)}
+`;
+
+const getTheme = (cond, isDay) => {
+  const c = (cond || "").toLowerCase();
+  if (c.includes("thunder") || c.includes("storm")) return { bg:"wxbg-thunder", card:"dark",  icon:"⛈️", type:"thunder" };
+  if (c.includes("snow") || c.includes("sleet"))     return { bg:"wxbg-snow",    card:"light", icon:"❄️", type:"snow" };
+  if (c.includes("rain") || c.includes("drizzle"))   return { bg:"wxbg-rain",    card:"dark",  icon:"🌧️", type:"rain" };
+  if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return { bg:"wxbg-fog", card:"dark", icon:"🌫️", type:"fog" };
+  if (c.includes("cloud") || c.includes("overcast")) return { bg:"wxbg-cloudy",  card:"",      icon:"☁️", type:"cloudy" };
+  if (!isDay) return { bg:"wxbg-night", card:"dark", icon:"🌙", type:"night" };
+  return         { bg:"wxbg-sunny", card:"", icon:"☀️", type:"sunny" };
 };
 
-const WeatherParticles = ({ type }) => {
+const windDir = (deg) => { if (deg==null) return ""; return ["N","NE","E","SE","S","SW","W","NW"][Math.round(deg/45)%8]; };
+
+const uvInfo = (uv) => {
+  if (uv==null) return null;
+  if (uv<=2)  return { label:"Low",       cls:"uv-low", bar:"bl",  w:Math.round(uv*9) };
+  if (uv<=5)  return { label:"Moderate",  cls:"uv-mod", bar:"bm",  w:Math.round(uv*9) };
+  if (uv<=7)  return { label:"High",      cls:"uv-high",bar:"bh",  w:Math.round(uv*9) };
+  if (uv<=10) return { label:"Very High", cls:"uv-vh",  bar:"bvh", w:Math.min(uv*9,100) };
+  return             { label:"Extreme",   cls:"uv-ext", bar:"be",  w:100 };
+};
+
+const Particles = ({ type }) => {
+  const items = [];
   if (type === "rain" || type === "thunder") {
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(35)].map((_, i) => (
-          <div key={i} className="absolute top-0 w-px bg-blue-300/40" style={{ left: `${Math.random() * 100}%`, height: `${12 + Math.random() * 18}px`, animationDelay: `${Math.random() * 2}s`, animation: `rainFall ${0.4 + Math.random() * 0.5}s linear infinite` }} />
-        ))}
-      </div>
-    );
+    for (let i=0;i<40;i++) items.push(<div key={i} className="raindrop" style={{ left:`${Math.random()*100}%`, height:`${12+Math.random()*22}px`, animationDuration:`${0.35+Math.random()*0.45}s`, animationDelay:`${Math.random()*2}s` }}/>);
+    if (type==="thunder") items.push(<div key="lx" className="lightning"/>);
   }
-  if (type === "snow") {
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(25)].map((_, i) => (
-          <div key={i} className="absolute top-0 text-white/60 text-xs" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 4}s`, animation: `snowFall ${3 + Math.random() * 3}s linear infinite` }}>❄</div>
-        ))}
-      </div>
-    );
-  }
-  if (type === "sun") {
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-6 right-10 w-28 h-28 bg-yellow-300/25 rounded-full blur-2xl" style={{ animation: "pulse 3s ease-in-out infinite" }} />
-        <div className="absolute top-3 right-6 w-14 h-14 bg-yellow-100/20 rounded-full blur-lg" style={{ animation: "pulse 2s ease-in-out infinite 1s" }} />
-      </div>
-    );
-  }
-  if (type === "stars") {
-    return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(40)].map((_, i) => (
-          <div key={i} className="absolute w-1 h-1 bg-white rounded-full" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 60}%`, opacity: Math.random() * 0.7 + 0.2, animation: `twinkle ${1 + Math.random() * 2}s ease-in-out infinite`, animationDelay: `${Math.random() * 2}s` }} />
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
-
-const getUVLevel = (uvi) => {
-  if (uvi <= 2) return { label: "Low", color: "text-green-400", bar: "bg-green-400" };
-  if (uvi <= 5) return { label: "Moderate", color: "text-yellow-400", bar: "bg-yellow-400" };
-  if (uvi <= 7) return { label: "High", color: "text-orange-400", bar: "bg-orange-400" };
-  if (uvi <= 10) return { label: "Very High", color: "text-red-400", bar: "bg-red-400" };
-  return { label: "Extreme", color: "text-purple-400", bar: "bg-purple-400" };
-};
-
-const getWindDir = (deg) => {
-  if (deg === undefined) return "";
-  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  return dirs[Math.round(deg / 45) % 8];
+  if (type === "snow") for (let i=0;i<28;i++) items.push(<div key={i} className="snowflake" style={{ left:`${Math.random()*100}%`, animationDuration:`${3+Math.random()*4}s`, animationDelay:`${Math.random()*5}s`, fontSize:`${10+Math.random()*10}px` }}>❄</div>);
+  if (type === "night") for (let i=0;i<55;i++) items.push(<div key={i} className="star" style={{ left:`${Math.random()*100}%`, top:`${Math.random()*70}%`, width:`${1+Math.random()*2}px`, height:`${1+Math.random()*2}px`, animationDuration:`${1+Math.random()*2.5}s`, animationDelay:`${Math.random()*3}s` }}/>);
+  if (type === "sunny") { items.push(<div key="sg" className="sunglow"/>); items.push(<div key="sr" className="sunray"/>); }
+  return <div className="particles">{items}</div>;
 };
 
 const WeatherCard = ({ city, onRemove }) => {
   const [forecast, setForecast] = useState([]);
-  const [oneCall, setOneCall] = useState(null);
+  const [uv, setUV] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const isDay = city.dt > city.sys.sunrise && city.dt < city.sys.sunset;
-  const theme = getWeatherTheme(city.weather[0].main, isDay);
+  const theme = getTheme(city.weather[0].main, isDay);
+  const uvMeta = uvInfo(uv);
+  const dir = windDir(city.wind.deg);
+  const isLight = theme.card === "light";
 
   useEffect(() => {
-    const fetchExtra = async () => {
+    (async () => {
       try {
-        const [foreRes, oneRes] = await Promise.all([
+        const [fr,or] = await Promise.all([
           fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city.name}&units=metric&cnt=5&appid=${API_KEY}`),
           fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${city.coord.lat}&lon=${city.coord.lon}&exclude=minutely,hourly,alerts&units=metric&appid=${API_KEY}`),
         ]);
-        if (foreRes.ok) { const d = await foreRes.json(); setForecast(d.list.slice(0, 5)); }
-        if (oneRes.ok) { const d = await oneRes.json(); setOneCall(d); }
-      } catch (_) {}
+        if (fr.ok) { const d=await fr.json(); setForecast(d.list.slice(0,5)); }
+        if (or.ok) { const d=await or.json(); setUV(d.current?.uvi??null); }
+      } catch(_) {}
       setLoading(false);
-    };
-    fetchExtra();
+    })();
   }, [city.name]);
 
-  const uv = oneCall?.current?.uvi ?? null;
-  const uvLevel = uv !== null ? getUVLevel(uv) : null;
-  const windDir = getWindDir(city.wind.deg);
-
   return (
-    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${theme.bg} text-white shadow-2xl mb-6`}>
-      <WeatherParticles type={theme.particles} />
-
-      {/* Header */}
-      <div className="relative z-10 p-6 pb-2 flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <span className="text-5xl">{theme.icon}</span>
+    <div className={`wx-card ${theme.card}`}>
+      <div style={{ padding:"24px 24px 10px", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          <span style={{ fontSize:44, lineHeight:1 }}>{theme.icon}</span>
           <div>
-            <h2 className="text-2xl font-bold">{city.name}, {city.sys.country}</h2>
-            <p className={`text-sm ${theme.accent} capitalize`}>{city.weather[0].description}</p>
+            <div className="cname">{city.name}, {city.sys.country}</div>
+            <div className="muted" style={{ marginTop:2, fontSize:13, textTransform:"capitalize" }}>{city.weather[0].description}</div>
           </div>
         </div>
-        <button onClick={() => onRemove(city.name)} className="w-8 h-8 rounded-full bg-white/20 hover:bg-red-400/60 flex items-center justify-center transition-all text-sm">✕</button>
+        <button className="wx-close" onClick={() => onRemove(city.name)}>✕</button>
       </div>
 
-      {/* Temperature */}
-      <div className="relative z-10 px-6 pb-4 flex items-end gap-4">
-        <span className="text-9xl font-thin leading-none">{Math.round(city.main.temp)}°</span>
-        <div className="pb-4 text-white/60 text-sm space-y-0.5">
-          <p>Feels like {Math.round(city.main.feels_like)}°C</p>
-          <p>↑ {Math.round(city.main.temp_max)}° &nbsp;↓ {Math.round(city.main.temp_min)}°</p>
+      <div style={{ padding:"0 24px 16px", display:"flex", alignItems:"flex-end", gap:16 }}>
+        <span className="tempn">{Math.round(city.main.temp)}°</span>
+        <div style={{ paddingBottom:12 }} className="muted">
+          <div>Feels {Math.round(city.main.feels_like)}°C</div>
+          <div>↑ {Math.round(city.main.temp_max)}° &nbsp;↓ {Math.round(city.main.temp_min)}°</div>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="relative z-10 px-4 pb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {/* Humidity */}
-        <div className={`${theme.card} backdrop-blur-md rounded-2xl p-3 border ${theme.border}`}>
-          <p className="text-white/50 text-xs mb-1">💧 Humidity</p>
-          <p className="text-2xl font-semibold">{city.main.humidity}%</p>
-          <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${city.main.humidity}%` }} />
-          </div>
+      <div style={{ padding:"0 16px 16px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+        <div className="wx-stat">
+          <div className="lbl">💧 Humidity</div>
+          <div className="val" style={{ marginTop:6 }}>{city.main.humidity}%</div>
+          <div className="bar-track"><div className="bar-fill" style={{ width:`${city.main.humidity}%`, background:"#60a5fa" }}/></div>
         </div>
-
-        {/* Wind */}
-        <div className={`${theme.card} backdrop-blur-md rounded-2xl p-3 border ${theme.border}`}>
-          <p className="text-white/50 text-xs mb-1">💨 Wind</p>
-          <p className="text-2xl font-semibold">{city.wind.speed} <span className="text-base font-normal">m/s</span></p>
-          <p className="text-white/50 text-xs mt-1">{windDir && `${windDir} · `}Gusts {city.wind.gust?.toFixed(1) ?? "—"}</p>
+        <div className="wx-stat">
+          <div className="lbl">💨 Wind</div>
+          <div className="val" style={{ marginTop:6 }}>{city.wind.speed} <span style={{ fontSize:13, fontWeight:400 }}>m/s</span></div>
+          <div className="muted" style={{ marginTop:5 }}>{dir && `${dir} · `}Gusts {city.wind.gust?.toFixed(1)??"—"}</div>
         </div>
-
-        {/* UV Index */}
-        <div className={`${theme.card} backdrop-blur-md rounded-2xl p-3 border ${theme.border}`}>
-          <p className="text-white/50 text-xs mb-1">☀️ UV Index</p>
-          {uv !== null ? (
+        <div className="wx-stat">
+          <div className="lbl">🌞 UV Index</div>
+          {!loading && uvMeta ? (
             <>
-              <p className={`text-2xl font-semibold ${uvLevel.color}`}>{uv.toFixed(1)}</p>
-              <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className={`h-full ${uvLevel.bar} rounded-full`} style={{ width: `${Math.min(uv * 9, 100)}%` }} />
-              </div>
-              <p className={`text-xs mt-1 ${uvLevel.color}`}>{uvLevel.label}</p>
+              <div className={`val ${uvMeta.cls}`} style={{ marginTop:6 }}>{uv?.toFixed(1)}</div>
+              <div className="bar-track"><div className={`bar-fill ${uvMeta.bar}`} style={{ width:`${uvMeta.w}%` }}/></div>
+              <div className={`muted ${uvMeta.cls}`} style={{ marginTop:5 }}>{uvMeta.label}</div>
             </>
-          ) : loading ? <p className="text-white/30 text-sm">Loading…</p> : <p className="text-white/40 text-sm">Unavailable</p>}
+          ) : <div className="muted" style={{ marginTop:6 }}>{loading?"Loading…":"N/A"}</div>}
         </div>
-
-        {/* Pressure */}
-        <div className={`${theme.card} backdrop-blur-md rounded-2xl p-3 border ${theme.border}`}>
-          <p className="text-white/50 text-xs mb-1">🌡 Pressure</p>
-          <p className="text-2xl font-semibold">{city.main.pressure}</p>
-          <p className="text-white/50 text-xs mt-1">hPa</p>
-          {city.visibility && <p className="text-white/40 text-xs mt-1">Vis: {(city.visibility / 1000).toFixed(1)} km</p>}
+        <div className="wx-stat">
+          <div className="lbl">🌡 Pressure</div>
+          <div className="val" style={{ marginTop:6 }}>{city.main.pressure} <span style={{ fontSize:13, fontWeight:400 }}>hPa</span></div>
+          {city.visibility && <div className="muted" style={{ marginTop:5 }}>Vis: {(city.visibility/1000).toFixed(1)} km</div>}
         </div>
       </div>
 
-      {/* 5-Step Forecast */}
       {!loading && forecast.length > 0 && (
-        <div className="relative z-10 px-4 pb-5">
-          <p className="text-white/40 text-xs uppercase tracking-widest mb-2 px-1">Forecast</p>
-          <div className="grid grid-cols-5 gap-1.5">
-            {forecast.map((f, i) => {
-              const time = new Date(f.dt * 1000);
-              const label = i === 0 ? "Now" : time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-              const fTheme = getWeatherTheme(f.weather[0].main, true);
+        <div style={{ padding:"0 16px 20px" }}>
+          <div className="lbl" style={{ paddingLeft:2, marginBottom:10 }}>5-Step Forecast</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8 }}>
+            {forecast.map((f,i) => {
+              const t = new Date(f.dt*1000);
+              const lbl = i===0 ? "Now" : t.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+              const fi = getTheme(f.weather[0].main,true).icon;
               return (
-                <div key={f.dt} className={`${theme.card} backdrop-blur-md rounded-xl p-2 text-center border ${theme.border}`}>
-                  <p className="text-white/50 text-xs">{label}</p>
-                  <p className="text-xl my-1">{fTheme.icon}</p>
-                  <p className="text-sm font-semibold">{Math.round(f.main.temp)}°</p>
-                  <p className="text-white/40 text-xs">{f.main.humidity}%</p>
+                <div key={f.dt} className={`fc-cell ${isLight?"light":""}`}>
+                  <div className="muted" style={{ fontSize:10 }}>{lbl}</div>
+                  <div style={{ fontSize:20, margin:"6px 0" }}>{fi}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:isLight?"#0f172a":"white" }}>{Math.round(f.main.temp)}°</div>
+                  <div className="muted" style={{ fontSize:10, marginTop:2 }}>{f.main.humidity}%</div>
                 </div>
               );
             })}
@@ -193,91 +196,55 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [weatherData, setWeatherData] = useState([]);
   const [error, setError] = useState("");
-  const [fetching, setFetching] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const activeBg = weatherData.length
+    ? (() => { const w=weatherData[0]; const isDay=w.dt>w.sys.sunrise&&w.dt<w.sys.sunset; return getTheme(w.weather[0].main,isDay); })()
+    : { bg:"wxbg-night", type:"night" };
 
   const fetchWeather = async (city) => {
-    setFetching(true);
-    setError("");
+    setBusy(true); setError("");
     try {
       const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`);
-      if (res.ok) {
-        const data = await res.json();
-        setWeatherData((prev) => [data, ...prev]);
-        setCities((prev) => [city.toLowerCase(), ...prev]);
-      } else {
-        setError("City not found. Please try again.");
-      }
-    } catch {
-      setError("Network error. Check your connection.");
-    }
-    setFetching(false);
+      if (res.ok) { const d=await res.json(); setWeatherData(p=>[d,...p]); setCities(p=>[city.toLowerCase(),...p]); }
+      else setError("City not found — please try again.");
+    } catch { setError("Network error. Check your connection."); }
+    setBusy(false);
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    if (cities.includes(trimmed.toLowerCase())) { setError("City already added."); return; }
-    fetchWeather(trimmed);
-    setQuery("");
+    const t = query.trim();
+    if (!t) return;
+    if (cities.includes(t.toLowerCase())) { setError("Already showing that city."); return; }
+    fetchWeather(t); setQuery("");
   };
 
   const removeCity = (name) => {
-    setWeatherData((prev) => prev.filter((c) => c.name !== name));
-    setCities((prev) => prev.filter((c) => c !== name.toLowerCase()));
+    setWeatherData(p=>p.filter(c=>c.name!==name));
+    setCities(p=>p.filter(c=>c!==name.toLowerCase()));
   };
 
   return (
     <>
-      <style>{`
-        @keyframes rainFall {
-          0% { transform: translateY(-20px); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(600px); opacity: 0; }
-        }
-        @keyframes snowFall {
-          0% { transform: translateY(-20px) translateX(0px); opacity: 0; }
-          10% { opacity: 0.8; }
-          50% { transform: translateY(200px) translateX(15px); }
-          90% { opacity: 0.8; }
-          100% { transform: translateY(600px) translateX(-10px); opacity: 0; }
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.3); }
-        }
-      `}</style>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
-        <div className="max-w-2xl mx-auto">
-
-          <div className="text-center mb-10">
-            <h1 className="text-5xl font-thin text-white tracking-[0.3em] mb-1">WEATHER</h1>
-            <p className="text-slate-500 text-xs tracking-[0.2em] uppercase">Live Global Conditions</p>
+      <style>{CSS}</style>
+      <div className={`wx-page ${activeBg.bg}`}>
+        <Particles type={activeBg.type} />
+        <div className="wx-content">
+          <div style={{ textAlign:"center", marginBottom:36 }}>
+            <h1 style={{ fontFamily:"'DM Serif Display',Georgia,serif", fontStyle:"italic", fontSize:"clamp(36px,8vw,52px)", fontWeight:400, color:"white", letterSpacing:"0.06em", textShadow:"0 4px 24px rgba(0,0,0,.25)" }}>Weather</h1>
+            <p style={{ color:"rgba(255,255,255,.42)", fontSize:11, letterSpacing:"0.22em", textTransform:"uppercase", marginTop:4 }}>Live Conditions</p>
           </div>
-
-          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
-            <input
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setError(""); }}
-              placeholder="Search any city…"
-              className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/30 rounded-2xl px-5 py-3 outline-none focus:border-white/50 transition-all"
-            />
-            <button type="submit" disabled={fetching} className="bg-white text-slate-900 font-semibold px-7 py-3 rounded-2xl hover:bg-white/90 active:scale-95 transition-all disabled:opacity-50">
-              {fetching ? "…" : "Search"}
-            </button>
+          <form onSubmit={handleSearch} style={{ display:"flex", gap:8, marginBottom:12 }}>
+            <input className="wx-input" value={query} onChange={e=>{setQuery(e.target.value);setError("");}} placeholder="Search any city…"/>
+            <button className="wx-btn" type="submit" disabled={busy}>{busy?"…":"Search"}</button>
           </form>
-
-          {error && <p className="text-red-400 text-sm text-center mb-4">{error}</p>}
-
-          {weatherData.map((city) => (
-            <WeatherCard key={city.id} city={city} onRemove={removeCity} />
-          ))}
-
-          {weatherData.length === 0 && !fetching && (
-            <div className="text-center text-white/20 mt-24">
-              <p className="text-7xl mb-4">🌍</p>
-              <p className="text-lg font-light">Search a city to see live weather</p>
+          {error && <p style={{ color:"#fca5a5", fontSize:13, textAlign:"center", marginBottom:14 }}>{error}</p>}
+          {weatherData.map(city=><WeatherCard key={city.id} city={city} onRemove={removeCity}/>)}
+          {weatherData.length===0 && !busy && (
+            <div style={{ textAlign:"center", color:"rgba(255,255,255,.22)", marginTop:80 }}>
+              <div style={{ fontSize:64, marginBottom:16 }}>🌍</div>
+              <div style={{ fontSize:16, fontWeight:300 }}>Search a city to see live weather</div>
             </div>
           )}
         </div>
