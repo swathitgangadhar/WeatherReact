@@ -1,19 +1,15 @@
 import React from "react";
-
-export default function StatCard({ title, value, footer, progressWidth, progressColor = "#7dd3fc", children }) {
+export default function StatCard({ theme, title, value, footer, progressWidth, progressClassName = "bg-blue-400", children }) {
   return (
-    <div className="weather-stat-card fade-up">
-      <p className="weather-stat-label">{title}</p>
-      <p className="weather-stat-value">{value}</p>
-      {progressWidth !== undefined ? (
-        <div className="weather-progress-track">
-          <div
-            className="weather-progress-bar"
-            style={{ width: progressWidth, background: progressColor }}
-          />
+    <div className={`${theme.card} backdrop-blur-md rounded-2xl p-3 border ${theme.border}`}>
+      <p className="text-white/50 text-xs mb-1">{title}</p>
+      <p className="text-2xl font-semibold">{value}</p>
+      {progressWidth !== undefined && (
+        <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all ${progressClassName}`} style={{ width: progressWidth }} />
         </div>
-      ) : null}
-      {footer ? <p className="weather-stat-footer">{footer}</p> : null}
+      )}
+      {footer ? <p className="text-white/50 text-xs mt-1">{footer}</p> : null}
       {children}
     </div>
   );

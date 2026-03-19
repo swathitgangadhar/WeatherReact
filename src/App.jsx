@@ -1,8 +1,7 @@
 import React from "react";
-import { useMemo, useState } from "react";
-import DynamicBackgroundCanvas from "./components/DynamicBackgroundCanvas";
+import { useState } from "react";
 import WeatherCard from "./components/WeatherCard";
-import { API_KEY, getWeatherTheme } from "./utils/weather";
+import { API_KEY } from "./utils/weather";
 
 export default function App() {
   const [cities, setCities] = useState([]);
@@ -10,17 +9,6 @@ export default function App() {
   const [weatherData, setWeatherData] = useState([]);
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState(false);
-
-  const activeTheme = useMemo(() => {
-    const primaryCity = weatherData[0];
-
-    if (!primaryCity) {
-      return getWeatherTheme("clear", true);
-    }
-
-    const isDay = primaryCity.dt > primaryCity.sys.sunrise && primaryCity.dt < primaryCity.sys.sunset;
-    return getWeatherTheme(primaryCity.weather[0].main, isDay);
-  }, [weatherData]);
 
   const fetchWeather = async (city) => {
     setFetching(true);
@@ -69,19 +57,38 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell" style={{ backgroundImage: activeTheme.gradient }}>
-      <DynamicBackgroundCanvas theme={activeTheme} />
-      <div className="app-background-glow" style={{ background: activeTheme.glow }} aria-hidden="true" />
+    <>
+      <style>{`
+        @keyframes rainFall {
+          0% { transform: translateY(-20px); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(600px); opacity: 0; }
+        }
+        @keyframes snowFall {
+          0% { transform: translateY(-20px) translateX(0px); opacity: 0; }
+          10% { opacity: 0.8; }
+          50% { transform: translateY(200px) translateX(15px); }
+          90% { opacity: 0.8; }
+          100% { transform: translateY(600px) translateX(-10px); opacity: 0; }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+      `}</style>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-10 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl font-thin text-white tracking-[0.3em] mb-1">WEATHER</h1>
+            <p className="text-slate-500 text-xs tracking-[0.2em] uppercase">Live Global Conditions</p>
+          </div>
 
-      <main className="app-content">
-        <section className="hero glass-panel fade-up" style={{ background: activeTheme.surface, borderColor: activeTheme.surfaceBorder }}>
-          <p className="hero-kicker">Reactive atmosphere</p>
-          <h1 className="hero-title">WEATHER</h1>
-          <p className="hero-subtitle">
-            Dynamic backgrounds, frosted glass cards, and live city conditions in one centered view.
-          </p>
-
-          <form onSubmit={handleSearch} className="search-form">
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
             <input
               value={query}
               onChange={(event) => {
@@ -89,33 +96,31 @@ export default function App() {
                 setError("");
               }}
               placeholder="Search any city…"
-              className="search-input"
-              aria-label="Search city"
+              className="flex-1 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-white/30 rounded-2xl px-5 py-3 outline-none focus:border-white/50 transition-all"
             />
-            <button type="submit" disabled={fetching} className="search-button">
-              {fetching ? "Searching…" : "Search"}
+            <button
+              type="submit"
+              disabled={fetching}
+              className="bg-white text-slate-900 font-semibold px-7 py-3 rounded-2xl hover:bg-white/90 active:scale-95 transition-all disabled:opacity-50"
+            >
+              {fetching ? "…" : "Search"}
             </button>
           </form>
 
-          {error ? <p className="search-error">{error}</p> : null}
-        </section>
+          {error ? <p className="text-red-400 text-sm text-center mb-4">{error}</p> : null}
 
-        <section className="weather-cards-stack">
-          {weatherData.map((city, index) => (
-            <WeatherCard key={city.id} city={city} onRemove={removeCity} featured={index === 0} />
+          {weatherData.map((city) => (
+            <WeatherCard key={city.id} city={city} onRemove={removeCity} />
           ))}
 
           {weatherData.length === 0 && !fetching ? (
-            <div className="empty-state glass-panel fade-up" style={{ background: activeTheme.surface, borderColor: activeTheme.surfaceBorder }}>
-              <p className="empty-state-icon"><span role="img" aria-label="globe">🌍</span></p>
-              <p className="empty-state-title">Search a city to animate the atmosphere.</p>
-              <p className="empty-state-copy">
-                The first searched city drives the full-screen background with weather-specific motion and palette changes.
-              </p>
+            <div className="text-center text-white/20 mt-24">
+              <p className="text-7xl mb-4"><span role="img" aria-label="globe">🌍</span></p>
+              <p className="text-lg font-light">Search a city to see live weather</p>
             </div>
           ) : null}
-        </section>
-      </main>
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
